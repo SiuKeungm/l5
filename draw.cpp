@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
     // draw trajectory in pangolin
     //DrawTrajectory(poses_e);
    // thread1.detach();
-   DrawTrajectory(poses_g,poses_e);
+   DrawTrajectory(poses_g,poses_e);//同时显示两个轨迹
 
     return 0;
 }
