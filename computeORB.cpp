@@ -406,10 +406,10 @@ void computeORBDesc(const cv::Mat &image, vector<cv::KeyPoint> &keypoints, vecto
             // START YOUR CODE HERE (~7 lines)
             int u_p=ORB_pattern[i*4],v_p = ORB_pattern[1+i*4];
             int u_q = ORB_pattern[2+i*4],v_q = ORB_pattern[3+i*4];
-            if(kp.pt.x + u_p < 0 && kp.pt.x+u_p > image.cols && kp.pt.y+v_p < 0 && kp.pt.y+v_p > image.rows
-                    && kp.pt.x + u_q < 0 && kp.pt.x+u_q > image.cols && kp.pt.y+v_q < 0 && kp.pt.y+v_q > image.rows){
+            if(kp.pt.x + u_p < 0 || kp.pt.x+u_p > image.cols || kp.pt.y+v_p < 0 || kp.pt.y+v_p > image.rows
+                    || kp.pt.x + u_q < 0 || kp.pt.x+u_q > image.cols || kp.pt.y+v_q < 0 || kp.pt.y+v_q > image.rows){
                 d.clear();
-                continue;
+                break;
             } else{
 
                 float u_pr=a*u_p - b*v_p, v_pr = b*u_p + a*v_p;
@@ -425,17 +425,17 @@ void computeORBDesc(const cv::Mat &image, vector<cv::KeyPoint> &keypoints, vecto
         }
 
         //相对位置方法
-      /*  const uchar* center= &image.at<uchar>(cvRound(kp.pt.y),cvRound(kp.pt.x));
+       /* const uchar* center= &image.at<uchar>(cvRound(kp.pt.y),cvRound(kp.pt.x));
         int step = (int)image.step;
 
         for (int i = 0; i < 256; i++) {
             // START YOUR CODE HERE (~7 lines)
             int u_p=ORB_pattern[i*4],v_p = ORB_pattern[1+i*4];
             int u_q = ORB_pattern[2+i*4],v_q = ORB_pattern[3+i*4];
-            if(kp.pt.x + u_p < 0 && kp.pt.x+u_p > image.cols && kp.pt.y+v_p < 0 && kp.pt.y+v_p > image.rows
-               && kp.pt.x + u_q < 0 && kp.pt.x+u_q > image.cols && kp.pt.y+v_q < 0 && kp.pt.y+v_q > image.rows){
+            if(kp.pt.x + u_p < 0 || kp.pt.x+u_p > image.cols || kp.pt.y+v_p < 0 || kp.pt.y+v_p > image.rows
+               || kp.pt.x + u_q < 0 || kp.pt.x+u_q > image.cols || kp.pt.y+v_q < 0 || kp.pt.y+v_q > image.rows){
                 d.clear();
-                continue;
+                break;
             } else{
 
                 float u_pr=a*u_p - b*v_p, v_pr = b*u_p + a*v_p;
@@ -451,6 +451,7 @@ void computeORBDesc(const cv::Mat &image, vector<cv::KeyPoint> &keypoints, vecto
             // if kp goes outside, set d.clear()
             // END YOUR CODE HERE
         }*/
+
         desc.push_back(d);
     }
 
@@ -464,17 +465,19 @@ void computeORBDesc(const cv::Mat &image, vector<cv::KeyPoint> &keypoints, vecto
 
 // brute-force matching
 void bfMatch(const vector<DescType> &desc1, const vector<DescType> &desc2, vector<cv::DMatch> &matches) {
-    int d_max = 45;
+    int d_max = 50  ;
 
     // START YOUR CODE HERE (~12 lines)
     int m=-1;
     for(auto des1:desc1){
         m++;
+        if(des1.empty()) continue;
         int distance = 1000,tempdis,index;
         cv::DMatch match;
         int n=-1;
         for(auto des2:desc2){
             n++;
+            if(des2.empty()) continue;//注意在下标累加之后再判断是否为空，否则会导致匹配出的描述子对应关系出错
             for (int i = 0; i <256 ; ++i) {
                 if(des1[i]!=des2[i])
                     tempdis++;
@@ -494,7 +497,7 @@ void bfMatch(const vector<DescType> &desc1, const vector<DescType> &desc2, vecto
             match.distance = distance;
             matches.push_back(match);
 
-        } else{  continue;}
+        } //else{  continue;}
     }
     // find matches between desc1 and desc2. 
     // END YOUR CODE HERE
