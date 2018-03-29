@@ -26,3 +26,6 @@ target_link_libraries(GN ${Sophus_LIBRARIES})
 add_executable(draw draw.cpp)
 target_link_libraries(draw ${Pangolin_LIBRARIES}
                            ${Sophus_LIBRARIES} ${OpenCV_LIBS})
+
+add_executable(display simpledisplay.cpp)
+target_link_libraries(display ${Pangolin_LIBRARIES})

@@ -16,11 +16,12 @@ string trajectory_file = "./compare.txt";
 // function for plotting trajectory, don't edit this code
 // start point is red and end point is blue
 void DrawTrajectory(vector<Sophus::SE3, Eigen::aligned_allocator<Sophus::SE3>>,
-                    vector<Sophus::SE3, Eigen::aligned_allocator<Sophus::SE3>>);
+                    vector<Sophus::SE3, Eigen::aligned_allocator<Sophus::SE3>>,
+                    vector<Sophus::SE3, Eigen::aligned_allocator<Sophus::SE3>> );
 
 int main(int argc, char **argv) {
 
-    vector<Sophus::SE3, Eigen::aligned_allocator<Sophus::SE3>> poses_e;
+    vector<Sophus::SE3, Eigen::aligned_allocator<Sophus::SE3>> poses_e,poses_before;
     vector<Sophus::SE3, Eigen::aligned_allocator<Sophus::SE3>> poses_g;
     vector<Eigen::Vector3d, Eigen::aligned_allocator<Eigen::Vector3d>> pts1,pts2;
 
@@ -54,6 +55,7 @@ int main(int argc, char **argv) {
     fin.close();
 
     //thread thread1(DrawTrajectory,poses_e,poses_g);
+    poses_before = poses_e;
 
 
     Eigen::Vector3d p1(0,0,0),p2(0,0,0);
@@ -96,14 +98,15 @@ int main(int argc, char **argv) {
     // draw trajectory in pangolin
     //DrawTrajectory(poses_e);
    // thread1.detach();
-   DrawTrajectory(poses_g,poses_e);
+   DrawTrajectory(poses_g,poses_e,poses_before);
 
     return 0;
 }
 
 /*******************************************************************************************/
 void DrawTrajectory(vector<Sophus::SE3, Eigen::aligned_allocator<Sophus::SE3>> poses1,
-                    vector<Sophus::SE3, Eigen::aligned_allocator<Sophus::SE3>> poses2) {
+                    vector<Sophus::SE3, Eigen::aligned_allocator<Sophus::SE3>> poses2,
+                    vector<Sophus::SE3, Eigen::aligned_allocator<Sophus::SE3>> poses3) {
     if (poses1.empty() || poses2.empty()) {
         cerr << "Trajectory is empty!" << endl;
         return;
@@ -124,9 +127,14 @@ void DrawTrajectory(vector<Sophus::SE3, Eigen::aligned_allocator<Sophus::SE3>> p
             .SetBounds(0.0, 1.0, pangolin::Attach::Pix(175), 1.0, -1024.0f / 768.0f)
             .SetHandler(new pangolin::Handler3D(s_cam));
 
+    pangolin::CreatePanel("ui").SetBounds(0.0,1.0,0.0,pangolin::Attach::Pix(175));
+    pangolin::Var<bool> before("ui.Before_align", false,true);
+    pangolin::Var<bool> after("ui.After_align", false, true);
+
 
     while (pangolin::ShouldQuit() == false) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 
         d_cam.Activate(s_cam);
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -135,23 +143,37 @@ void DrawTrajectory(vector<Sophus::SE3, Eigen::aligned_allocator<Sophus::SE3>> p
         glLineWidth(2);
         for (size_t i = 0; i < poses1.size() - 1; i++) {
             //glColor3f(1 - (float) i / poses.size(), 0.0f, (float) i / poses.size());
-            glColor3f(1 , 0.0f, 0);
+            glColor3f(0.2 , 0.0f, 0);
             glBegin(GL_LINES);
             auto p1 = poses1[i], p2 = poses1[i + 1];
             glVertex3d(p1.translation()[0], p1.translation()[1], p1.translation()[2]);
             glVertex3d(p2.translation()[0], p2.translation()[1], p2.translation()[2]);
             glEnd();
         }
-        for (size_t i = 0; i < poses2.size() - 1; i++) {
-            //glColor3f(1 - (float) i / poses.size(), 0.0f, (float) i / poses.size());
-            glColor3f(0 , 0,1);
-            glBegin(GL_LINES);
-            auto p1 = poses2[i], p2 = poses2[i + 1];
-            glVertex3d(p1.translation()[0], p1.translation()[1], p1.translation()[2]);
-            glVertex3d(p2.translation()[0], p2.translation()[1], p2.translation()[2]);
-            glEnd();
+        if(before) {
+            for (size_t i = 0; i < poses3.size() - 1; i++) {
+                //glColor3f(1 - (float) i / poses.size(), 0.0f, (float) i / poses.size());
+                glColor3f(0, 0, 1);
+                glBegin(GL_LINES);
+                auto p1 = poses3[i], p2 = poses3[i + 1];
+                glVertex3d(p1.translation()[0], p1.translation()[1], p1.translation()[2]);
+                glVertex3d(p2.translation()[0], p2.translation()[1], p2.translation()[2]);
+                glEnd();
+            }
+        }
+        if(after) {
+            for (size_t i = 0; i < poses2.size() - 1; i++) {
+                //glColor3f(1 - (float) i / poses2.size(), 0.0f, (float) i / poses2.size());
+                glColor3f(1.0, 0.0, 0);
+                glBegin(GL_LINES);
+                auto p1 = poses2[i], p2 = poses2[i + 1];
+                glVertex3d(p1.translation()[0], p1.translation()[1], p1.translation()[2]);
+                glVertex3d(p2.translation()[0], p2.translation()[1], p2.translation()[2]);
+                glEnd();
+            }
         }
        // pangolin::SaveFramebuffer();
+
         pangolin::FinishFrame();
         usleep(3500);   // sleep 5 ms
     }
